@@ -2,7 +2,7 @@
 -- https://discord.gg/VhvTd5HV8d
 -- example at bottom
 
-if getgenv().Library then
+if getgenv().Library and type(getgenv().Library.Unload) == "function" then
     getgenv().Library:Unload()
 end
 
@@ -21,7 +21,6 @@ local Library do
 
     local LocalPlayer = Players.LocalPlayer
 	
-    --[[ local Mouse = LocalPlayer:GetMouse() --]]
 
     local FromRGB = Color3.fromRGB
     local FromHSV = Color3.fromHSV
