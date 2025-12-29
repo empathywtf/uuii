@@ -2,7 +2,7 @@
 -- https://discord.gg/VhvTd5HV8d
 -- example at bottom
 
-if getgenv().Library and type(getgenv().Library.Unload) == "function" then
+if getgenv().Library then
     getgenv().Library:Unload()
 end
 
@@ -20,7 +20,7 @@ local Library do
     end
 
     local LocalPlayer = Players.LocalPlayer
-	
+    local Mouse = LocalPlayer:GetMouse()
 
     local FromRGB = Color3.fromRGB
     local FromHSV = Color3.fromHSV
@@ -301,14 +301,8 @@ local Library do
 
             setmetatable(NewItem, Instances)
 
-            for Property, Value in pairs(NewItem.Properties) do
-                pcall(function()
-                    if Property == "FontFace" and typeof(Value) == "EnumItem" then
-                        NewItem.Instance.Font = Value
-                    else
-                        NewItem.Instance[Property] = Value
-                    end
-                end)
+            for Property, Value in NewItem.Properties do
+                NewItem.Instance[Property] = Value
             end
 
             return NewItem
@@ -502,9 +496,34 @@ local Library do
         end
     end
 
+    -- Custom font
+    local CustomFont = { } do
+        function CustomFont:New(Name, Weight, Style, Data)
+            if not isfile(Data.Id) then 
+                writefile(Data.Id, game:HttpGet(Data.Url))
+            end
 
-        Library.Font = Enum.Font.Gotham
+            local Data = {
+                name = Name,
+                faces = {
+                    {
+                        name = Name,
+                        weight = Weight,
+                        style = Style,
+                        assetId = getcustomasset(Data.Id)
+                    }
+                }
+            }
 
+            writefile(`{Library.Folders.Fonts}/{Name}.font`, HttpService:JSONEncode(Data))
+            return Font.new(getcustomasset(`{Library.Folders.Fonts}/{Name}.font`), Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+        end
+
+        Library.Font = CustomFont:New("InterSemiBold", "Regular", "Normal", {
+            Id = "Inter",
+            Url = "https://github.com/sametexe001/luas/raw/refs/heads/main/fonts/InterSemibold.ttf"
+        })
+    end
 
     Library.Holder = Instances:Create("ScreenGui", {
         Parent = gethui(),
@@ -644,21 +663,12 @@ local Library do
             Properties = Properties,
         }
 
-        for Property, Value in pairs(ThemeData.Properties) do
-            local Success, Res = pcall(function()
-                local NewValue
-                if type(Value) == "string" then
-                    NewValue = self.Theme[Value]
-                else
-                    NewValue = Value()
-                end
-
-                if Property == "FontFace" and typeof(NewValue) == "EnumItem" then
-                    Item.Font = NewValue
-                else
-                    Item[Property] = NewValue
-                end
-            end)
+        for Property, Value in ThemeData.Properties do
+            if type(Value) == "string" then
+                Item[Property] = self.Theme[Value]
+            else
+                Item[Property] = Value()
+            end
         end
 
         TableInsert(self.ThemeItems, ThemeData)
@@ -757,20 +767,13 @@ local Library do
     Library.ChangeTheme = function(self, Theme, Color)
         self.Theme[Theme] = Color
 
-        for _, Item in pairs(self.ThemeItems) do
-            for Property, Value in pairs(Item.Properties) do
-                pcall(function()
-                    if type(Value) == "string" and Value == Theme then
-                        Item.Item[Property] = Color
-                    elseif type(Value) == "function" then
-                        local NewValue = Value()
-                        if Property == "FontFace" and typeof(NewValue) == "EnumItem" then
-                            Item.Item.Font = NewValue
-                        else
-                            Item.Item[Property] = NewValue
-                        end
-                    end
-                end)
+        for _, Item in self.ThemeItems do
+            for Property, Value in Item.Properties do
+                if type(Value) == "string" and Value == Theme then
+                    Item.Item[Property] = Color
+                elseif type(Value) == "function" then
+                    Item.Item[Property] = Value()
+                end
             end
         end
     end
@@ -823,7 +826,7 @@ local Library do
                 Items["ColorpickerButton"] = Instances:Create("TextButton", {
                     Parent = Data.Parent.Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(0, 0, 0),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "",
@@ -891,7 +894,7 @@ local Library do
                 Items["Palette"] = Instances:Create("TextButton", {
                     Parent = Items["Inline"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(0, 0, 0),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "-,",
@@ -980,7 +983,7 @@ local Library do
                 Items["Hue"] = Instances:Create("TextButton", {
                     Parent = Items["Inline"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(0, 0, 0),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "",
@@ -1291,7 +1294,7 @@ local Library do
                 Items["KeyButton"] = Instances:Create("TextButton", {
                     Parent = Data.Parent.Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(100, 100, 100),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "-",
@@ -1359,7 +1362,7 @@ local Library do
                 Items["Toggle"] = Instances:Create("TextButton", {
                     Parent = Items["Inline"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "Toggle",
@@ -1387,7 +1390,7 @@ local Library do
                 Items["Hold"] = Instances:Create("TextButton", {
                     Parent = Items["Inline"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(100, 100, 100),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "Hold",
@@ -1402,7 +1405,7 @@ local Library do
                 Items["Always"] = Instances:Create("TextButton", {
                     Parent = Items["Inline"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(100, 100, 100),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "Always",
@@ -1774,7 +1777,7 @@ local Library do
                 Items["Text"] = Instances:Create("TextLabel", {
                     Parent = Items["Notification"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = Name,
@@ -1938,7 +1941,7 @@ local Library do
                 Items["Text"] = Instances:Create("TextLabel", {
                     Parent = Items["Background"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(0, 0, 0),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = FirstLetterOfName,
@@ -1954,7 +1957,7 @@ local Library do
                 Items["RealTitle"] = Instances:Create("TextLabel", {
                     Parent = Items["Title"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = Window.Name,
@@ -1970,7 +1973,7 @@ local Library do
                 Items["Game"] = Instances:Create("TextLabel", {
                     Parent = Items["Title"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     TextTransparency = 0.5,
                     Text = Window.SubTitle,
@@ -2058,7 +2061,7 @@ local Library do
                 Items["SubExpires"] = Instances:Create("TextLabel", {
                     Parent = Items["Bottom_"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     TextTransparency = 0.5,
                     Text = "Sub expires in "..Window.ExpiresIn,
@@ -2075,7 +2078,7 @@ local Library do
                 Items["SessionDuration"] = Instances:Create("TextLabel", {
                     Parent = Items["Bottom_"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "Session duration: ",
@@ -2184,7 +2187,7 @@ local Library do
                 Items["Inactive"] = Instances:Create("TextButton", {
                     Parent = Page.Window.Items["Pages"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(0, 0, 0),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "",
@@ -2227,7 +2230,7 @@ local Library do
                 Items["Text"] = Instances:Create("TextLabel", {
                     Parent = Items["Inactive"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(100, 100, 100),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = Page.Name,
@@ -2255,7 +2258,7 @@ local Library do
                 Items["PageName"] = Instances:Create("TextLabel", {
                     Parent = Items["Page"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = Page.Name,
@@ -2368,7 +2371,7 @@ local Library do
                 Items["Category"] = Instances:Create("TextLabel", {
                     Parent = self.Items["Pages"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     TextTransparency = 0.5,
                     Text = Name,
@@ -2404,7 +2407,7 @@ local Library do
                 Items["Inactive"] = Instances:Create("TextButton", {
                     Parent = Page.Page.Items["SubPages"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     TextTransparency = 0.5,
                     Text = Page.Name,
@@ -2588,7 +2591,7 @@ local Library do
                 Items["Text"] = Instances:Create("TextLabel", {
                     Parent = Items["Section"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(100, 100, 100),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = Section.Name,
@@ -2646,7 +2649,7 @@ local Library do
                 Items["Toggle"] = Instances:Create("TextButton", {
                     Parent = Toggle.Section.Items["Content"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(0, 0, 0),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "",
@@ -2661,7 +2664,7 @@ local Library do
                 Items["Text"] = Instances:Create("TextLabel", {
                     Parent = Items["Toggle"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(100, 100, 100),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = Toggle.Name,
@@ -2863,7 +2866,7 @@ local Library do
                 Items["Button"] = Instances:Create("TextButton", {
                     Parent = Button.Section.Items["Content"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = Button.Name,
@@ -2953,7 +2956,7 @@ local Library do
                 Items["Text"] = Instances:Create("TextLabel", {
                     Parent = Items["Slider"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = Slider.Name,
@@ -2968,7 +2971,7 @@ local Library do
                 Items["Value"] = Instances:Create("TextLabel", {
                     Parent = Items["Slider"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(100, 100, 100),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "",
@@ -3165,7 +3168,7 @@ local Library do
                 Items["Text"] = Instances:Create("TextLabel", {
                     Parent = Items["Dropdown"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(255, 255, 255),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = Dropdown.Name,
@@ -3182,7 +3185,7 @@ local Library do
                 Items["RealDropdown"] = Instances:Create("TextButton", {
                     Parent = Items["Dropdown"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(0, 0, 0),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "",
@@ -3204,7 +3207,7 @@ local Library do
                 Items["Value"] = Instances:Create("TextLabel", {
                     Parent = Items["RealDropdown"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(100, 100, 100),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = "...",
@@ -3415,7 +3418,7 @@ local Library do
                 local OptionButton = Instances:Create("TextButton", {
                     Parent = Items["Holder"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(100, 100, 100),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = Option,
@@ -3578,7 +3581,7 @@ local Library do
                 Items["Text"] = Instances:Create("TextLabel", {
                     Parent = Items["Label"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     TextColor3 = FromRGB(100, 100, 100),
                     BorderColor3 = FromRGB(0, 0, 0),
                     Text = Label.Name,
@@ -3711,7 +3714,7 @@ local Library do
                 Items["Input"] = Instances:Create("TextBox", {
                     Parent = Items["Textbox"].Instance,
                     Name = "\0",
-                    Font = Library.Font,
+                    FontFace = Library.Font,
                     CursorPosition = -1,
                     TextColor3 = FromRGB(255, 255, 255),
                     BorderColor3 = FromRGB(0, 0, 0),
@@ -3946,55 +3949,3 @@ local Library do
         end
     end
 end
-
-local Window = Library:Window({Name = "Balright"})
-
-Window:Category("penis")
-local CombatPage = Window:Page({Name = "Page", Icon = "136879043989014"})
-Window:Page({Name = "Page", Icon = "136879043989014"})
-Window:Page({Name = "Page", Icon = "136879043989014"})
-
-local CombatSubPage = CombatPage:SubPage({Name = "Combat"})
-CombatPage:SubPage({Name = "Weapon"})
-CombatPage:SubPage({Name = "FoV"})
-
-Window:Category("Settings")
-local SettingsPage = Library:CreateSettingsPage(Window)
-
-for Index = 1, 2 do 
-    local AimbotSection = CombatSubPage:Section({Name = "Aimbot", Icon = "136879043989014", Side = Index})
-
-    AimbotSection:Toggle({Name = "Toggle", Flag = "Toggle", Callback = function(Value)
-        print(Value)
-    end})
-
-    AimbotSection:Button({Name = "Button", Callback = function()
-        print("Button")
-    end})
-
-    AimbotSection:Slider({Name = "Slider", Flag = "Slider", Min = 0, Max = 100, Default = 50, Suffix = "%", Decimals = 1, Callback = function(Value)
-        print(Value)
-    end})
-
-    AimbotSection:Dropdown({Name = "Dropdown", Flag = "Dropdown", Items = {"Optionn 1", "Optionn 2", "Optionn 3", "Optionn 4"}, Default = "Optionnnn 2", Multi = false, Callback = function(Value)
-        print(Value)
-    end})
-
-    AimbotSection:Label("Label"):Colorpicker({Flag = "Colorpicker", Default = Color3.fromRGB(255, 255, 255), Callback = function(Value)
-        print(Value)
-    end})
-
-    AimbotSection:Label("Label"):Keybind({Flag = "Keybind", Default = Enum.KeyCode.E, Mode = "Toggle", Callback = function(Value)
-        print(Value)
-    end})
-
-    AimbotSection:Textbox({Flag = "Textbox", Placeholder = "Placeholder", Default = "Text", Finished = false, Numeric = false, Callback = function(Value)
-        print(Value)
-    end})
-end
-
-Library:Notification("Notification without icon", 5, nil)
-Library:Notification("Notification with icon lol noob", 5, "94627324690861")
-
-getgenv().Library = Library
-return Library
