@@ -301,8 +301,14 @@ local Library do
 
             setmetatable(NewItem, Instances)
 
-            for Property, Value in NewItem.Properties do
-                NewItem.Instance[Property] = Value
+            for Property, Value in pairs(NewItem.Properties) do
+                pcall(function()
+                    if Property == "FontFace" and typeof(Value) == "EnumItem" then
+                        NewItem.Instance.Font = Value
+                    else
+                        NewItem.Instance[Property] = Value
+                    end
+                end)
             end
 
             return NewItem
@@ -638,12 +644,21 @@ local Library do
             Properties = Properties,
         }
 
-        for Property, Value in ThemeData.Properties do
-            if type(Value) == "string" then
-                Item[Property] = self.Theme[Value]
-            else
-                Item[Property] = Value()
-            end
+        for Property, Value in pairs(ThemeData.Properties) do
+            local Success, Res = pcall(function()
+                local NewValue
+                if type(Value) == "string" then
+                    NewValue = self.Theme[Value]
+                else
+                    NewValue = Value()
+                end
+
+                if Property == "FontFace" and typeof(NewValue) == "EnumItem" then
+                    Item.Font = NewValue
+                else
+                    Item[Property] = NewValue
+                end
+            end)
         end
 
         TableInsert(self.ThemeItems, ThemeData)
@@ -742,13 +757,20 @@ local Library do
     Library.ChangeTheme = function(self, Theme, Color)
         self.Theme[Theme] = Color
 
-        for _, Item in self.ThemeItems do
-            for Property, Value in Item.Properties do
-                if type(Value) == "string" and Value == Theme then
-                    Item.Item[Property] = Color
-                elseif type(Value) == "function" then
-                    Item.Item[Property] = Value()
-                end
+        for _, Item in pairs(self.ThemeItems) do
+            for Property, Value in pairs(Item.Properties) do
+                pcall(function()
+                    if type(Value) == "string" and Value == Theme then
+                        Item.Item[Property] = Color
+                    elseif type(Value) == "function" then
+                        local NewValue = Value()
+                        if Property == "FontFace" and typeof(NewValue) == "EnumItem" then
+                            Item.Item.Font = NewValue
+                        else
+                            Item.Item[Property] = NewValue
+                        end
+                    end
+                end)
             end
         end
     end
@@ -3689,7 +3711,7 @@ local Library do
                 Items["Input"] = Instances:Create("TextBox", {
                     Parent = Items["Textbox"].Instance,
                     Name = "\0",
-                    FontFace = Library.Font,
+                    Font = Library.Font,
                     CursorPosition = -1,
                     TextColor3 = FromRGB(255, 255, 255),
                     BorderColor3 = FromRGB(0, 0, 0),
