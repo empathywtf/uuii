@@ -20,7 +20,8 @@ local Library do
     end
 
     local LocalPlayer = Players.LocalPlayer
-    local Mouse = LocalPlayer:GetMouse()
+	
+    --[[ local Mouse = LocalPlayer:GetMouse() --]]
 
     local FromRGB = Color3.fromRGB
     local FromHSV = Color3.fromHSV
